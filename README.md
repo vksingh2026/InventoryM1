@@ -102,11 +102,12 @@ Backend on Render:
 Frontend on Vercel:
 
 1. Import this repository into Vercel.
-2. Set the root directory to `frontend`.
-3. Add `VITE_API_BASE_URL=https://your-backend.onrender.com`.
-4. Build command: `npm run build`.
-5. Output directory: `dist`.
-6. Deploy and verify product, customer, and order workflows.
+2. Use the root directory `/` or set the root to the repository root.
+3. Vercel will use `vercel.json` to build the frontend from `frontend/package.json`.
+4. Add `VITE_API_BASE_URL=https://your-backend.onrender.com`.
+5. Build command: `npm run build`.
+6. Output directory: `dist`.
+7. Deploy and verify product, customer, and order workflows.
 
 Docker Hub backend image:
 

@@ -1,0 +1,9 @@
+backend/
+.dockerignore
+Dockerfile
+docker-compose.yml
+.env.example
+.venv/
+.git/
+README.md
+package-lock.json
