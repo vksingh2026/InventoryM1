@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 import hashlib
@@ -9,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
-from .database import Base, engine, get_db
+from .database import Base, engine, SessionLocal, get_db
 from .models import AuthToken, Customer, OTPVerification, Order, OrderItem, Product, User
 from .schemas import (
     AuthResponse,
@@ -29,6 +30,10 @@ from .schemas import (
 )
 
 Base.metadata.create_all(bind=engine)
+
+DEFAULT_ADMIN_EMAIL = os.getenv("DEFAULT_ADMIN_EMAIL", "admin@inventory.local")
+DEFAULT_ADMIN_PASSWORD = os.getenv("DEFAULT_ADMIN_PASSWORD", "Inventory123!")
+DEFAULT_ADMIN_NAME = os.getenv("DEFAULT_ADMIN_NAME", "Inventory Admin")
 
 app = FastAPI(title="Inventory & Order Management API", version="1.0.0")
 
@@ -58,6 +63,22 @@ def hash_secret(value: str, salt: str | None = None) -> str:
     salt = salt or secrets.token_hex(16)
     digest = hashlib.pbkdf2_hmac("sha256", value.encode(), salt.encode(), 100_000).hex()
     return f"{salt}${digest}"
+
+
+def seed_default_user(db: Session) -> None:
+    if db.query(User).count() == 0:
+        admin = User(
+            full_name=DEFAULT_ADMIN_NAME,
+            email=DEFAULT_ADMIN_EMAIL,
+            password_hash=hash_secret(DEFAULT_ADMIN_PASSWORD),
+            is_verified=True,
+        )
+        db.add(admin)
+        db.commit()
+        print(f"Seeded default login: {DEFAULT_ADMIN_EMAIL} / {DEFAULT_ADMIN_PASSWORD}")
+
+with SessionLocal() as session:
+    seed_default_user(session)
 
 
 def verify_secret(value: str, stored_hash: str) -> bool:

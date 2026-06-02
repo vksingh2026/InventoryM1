@@ -1,5 +1,12 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
+class ApiError extends Error {
+  constructor(message, status) {
+    super(message);
+    this.status = status;
+  }
+}
+
 async function request(path, options = {}) {
   const token = localStorage.getItem("inventory_auth_token");
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -18,7 +25,11 @@ async function request(path, options = {}) {
     const message = Array.isArray(data.detail)
       ? data.detail.map((item) => item.msg).join(", ")
       : data.detail || "Request failed";
-    throw new Error(message);
+    if (response.status === 401) {
+      localStorage.removeItem("inventory_auth_token");
+      localStorage.removeItem("inventory_auth_user");
+    }
+    throw new ApiError(message, response.status);
   }
   return data;
 }

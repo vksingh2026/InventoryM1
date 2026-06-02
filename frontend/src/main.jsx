@@ -161,7 +161,15 @@ function AuthScreen({ onAuthenticated }) {
 function App() {
   const [user, setUser] = useState(() => {
     const storedUser = localStorage.getItem("inventory_auth_user");
-    return storedUser ? JSON.parse(storedUser) : null;
+    const token = localStorage.getItem("inventory_auth_token");
+    if (!storedUser || !token) return null;
+    try {
+      return JSON.parse(storedUser);
+    } catch {
+      localStorage.removeItem("inventory_auth_user");
+      localStorage.removeItem("inventory_auth_token");
+      return null;
+    }
   });
   const [activeTab, setActiveTab] = useState("products");
   const [products, setProducts] = useState([]);
@@ -191,7 +199,9 @@ function App() {
       setCustomers(nextCustomers);
       setOrders(nextOrders);
     } catch (error) {
-      setNotice({ type: "error", message: error.message });
+      if (!handleApiError(error)) {
+        setNotice({ type: "error", message: error.message });
+      }
     } finally {
       setLoading(false);
     }
@@ -211,6 +221,14 @@ function App() {
     setOrders([]);
     setSummary({ total_products: 0, total_customers: 0, total_orders: 0, low_stock_products: 0 });
     setNotice({});
+  }
+
+  function handleApiError(error) {
+    if (error?.status === 401) {
+      logout();
+      return true;
+    }
+    return false;
   }
 
   const selectedProduct = useMemo(
@@ -237,7 +255,9 @@ function App() {
       setEditingProductId(null);
       await loadAll();
     } catch (error) {
-      setNotice({ type: "error", message: error.message });
+      if (!handleApiError(error)) {
+        setNotice({ type: "error", message: error.message });
+      }
     }
   }
 
@@ -249,7 +269,9 @@ function App() {
       setNotice({ type: "success", message: "Customer created" });
       await loadAll();
     } catch (error) {
-      setNotice({ type: "error", message: error.message });
+      if (!handleApiError(error)) {
+        setNotice({ type: "error", message: error.message });
+      }
     }
   }
 
@@ -265,7 +287,9 @@ function App() {
       setNotice({ type: "success", message: "Order created and stock updated" });
       await loadAll();
     } catch (error) {
-      setNotice({ type: "error", message: error.message });
+      if (!handleApiError(error)) {
+        setNotice({ type: "error", message: error.message });
+      }
     }
   }
 
@@ -288,7 +312,9 @@ function App() {
       setNotice({ type: "success", message: `${type[0].toUpperCase()}${type.slice(1)} deleted` });
       await loadAll();
     } catch (error) {
-      setNotice({ type: "error", message: error.message });
+      if (!handleApiError(error)) {
+        setNotice({ type: "error", message: error.message });
+      }
     }
   }
 
